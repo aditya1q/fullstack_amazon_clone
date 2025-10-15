@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import { NextResponse } from "next/server";
 dotenv.config();
 
-export async function GET(request) {
+export async function POST(request) {
     const url = process.env.MONGO_URL;
     if (!url) {
         return NextResponse.json({ error: "Mongo_URL is not defind" })
