@@ -1,46 +1,54 @@
 "use client";
 
-import axios from 'axios';
-import React from 'react';
-import ProductCard from './card/ProductCard'; // Adjust the path based on your file structure
-
-const apiRoot = process.env.NEXT_PUBLIC_API_ROOT;
+import React, { useState } from 'react';
+import ProductCard from './card/ProductCard';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useFetchProductData } from '@/app/_lib/useFetchData';
 
 const Product = () => {
-    const [products, setProducts] = React.useState([]);
-    const [visibleCount, setVisibleCount] = React.useState(8);
+    const [itemsToShow, setItemsToShow] = useState(8); // Start by showing 8 products
 
-    const showMore = () => {
-        setVisibleCount(visibleCount + 12);
-    };
+    // Infinite Query for products with pagination
+    const { data, error, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, } = useInfiniteQuery({
+        queryKey: ['products'],
+        queryFn: useFetchProductData,
+        getNextPageParam: (lastPage) => lastPage.nextCursor || undefined, // Get next cursor from last page
+        refetchOnWindowFocus: false, // Disable refetching on window focus
+    });
 
+    // Loading and error states
+    if (isLoading) return <p>Loading...</p>;
+    if (error) return <p>Error: {error.message}</p>;
 
-    React.useEffect(() => {
-        axios.get(`${apiRoot}/product`)
-            .then((res) => {
-                console.log(res.data)
-                setProducts(res.data.product.data.products);
-            })
-            .catch((error) => console.log('Error in product call', error));
-    }, []);
+    // Combine all products from paginated results
+    const allProducts = data?.pages.flatMap((page) => page.products);
 
     return (
         <div className='relative top-[-20px]'>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {products.slice(0, visibleCount).map((product) => (
+                {allProducts.slice(0, itemsToShow).map((product) => (
                     <ProductCard key={product.asin} product={product} />
                 ))}
             </div>
-            {products.length > visibleCount && (
-                <div className="mt-4 text-center">
-                    <button
-                        onClick={showMore}
-                        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-300"
-                    >
-                        Show More
-                    </button>
-                </div>
-            )}
+
+            <div className="mt-4 text-center">
+                <button
+                    onClick={() => {
+                        if (itemsToShow >= allProducts.length && hasNextPage) {
+                            fetchNextPage(); // Fetch more products if there are more pages
+                        }
+                        setItemsToShow((prev) => prev + 12); // Show 12 more products
+                    }}
+                    disabled={!hasNextPage && itemsToShow >= allProducts.length} // Disable button if no more products to load
+                    className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-300"
+                >
+                    {isFetchingNextPage
+                        ? 'Loading more...'
+                        : hasNextPage || itemsToShow < allProducts.length
+                            ? 'Show More'
+                            : 'No more products to load'}
+                </button>
+            </div>
         </div>
     );
 };

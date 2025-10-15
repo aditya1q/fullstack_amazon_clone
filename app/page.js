@@ -6,13 +6,13 @@ import React from 'react';
 export default function Home() {
 
   return (
-    <main className="">
+    <>
       <Header />
       <div className='px-2 space-y-5'>
         <Carousel />
         <ProductList />
-        <Deals />
+        {/* <Deals /> */}
       </div>
-    </main>
+    </>
   );
 }

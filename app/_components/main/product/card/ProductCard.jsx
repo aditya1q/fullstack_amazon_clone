@@ -42,6 +42,7 @@ const ProductCard = ({ product }) => {
                 {product.sales_volume && (
                     <p className="mt-2 text-green-600 text-sm font-semibold">{product.sales_volume}</p>
                 )}
+                <button>Add cart</button>
             </div>
         </div>
     );

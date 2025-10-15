@@ -10,13 +10,7 @@ export async function GET(request) {
         return NextResponse.json({ error: "MONGO_URL is not defined in .env file" });
     }
 
-    const client = new MongoClient(url, {
-        serverApi: {
-            version: ServerApiVersion.v1,
-            strict: true,
-            deprecationErrors: true,
-        }
-    });
+    const client = new MongoClient(url);
 
     try {
         await client.connect();
